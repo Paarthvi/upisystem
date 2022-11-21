@@ -12,7 +12,8 @@ CREATE TABLE individual (
     city VARCHAR(50),
     state VARCHAR(50),
     pin VARCHAR(6),
-    phone_number VARCHAR(10)
+    phone_number VARCHAR(10) UNIQUE,
+    login_password VARCHAR(255)
 );
 
 CREATE TABLE bank (
