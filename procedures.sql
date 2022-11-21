@@ -1,4 +1,6 @@
 use upi_system;
+
+
 DROP PROCEDURE IF EXISTS addIndividual;
 DELIMITER //
 CREATE PROCEDURE addIndividual(
