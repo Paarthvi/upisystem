@@ -19,3 +19,75 @@ BEGIN
     VALUES (ssn, first_name, last_name, house_number, street_name, city, state, pin, phone_number);
 END//
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS registerForUPIConsumer;
+DELIMITER //
+CREATE PROCEDURE registerForUPIConsumer(
+	ssn VARCHAR(8),
+	account_number VARCHAR(10),
+	email_id VARCHAR(50),
+	pin INT)
+BEGIN
+	IF (checkLength(ssn, 8) != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SSN should be 8 characters';
+	END IF;
+	INSERT INTO upi_customer (ssn, account_number, email_id, pin)
+	VALUES (ssn, account_number, email_id, pin);
+	INSERT INTO consumer (ssn, account_number)
+	VALUES (ssn, account_number);
+END//
+DELIMITER ;
+
+
+DROP PROCEDURE IF EXISTS registerForUPIMerchant;
+DELIMITER //
+CREATE PROCEDURE registerForUPIMerchant(
+	ssn VARCHAR(8),
+	account_number VARCHAR(10),
+	email_id VARCHAR(50),
+	pin INT,
+	gst_number VARCHAR(10),
+    fee_percentage FLOAT,
+    building_name VARCHAR(50),
+    street_name VARCHAR(50),
+    city VARCHAR(50),
+    state VARCHAR(50),
+    addressPin VARCHAR(6),
+    ssn VARCHAR(20),
+    account_number VARCHAR(10))
+BEGIN
+	IF (checkLength(ssn, 8) != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SSN should be 8 characters';
+	END IF;
+	IF (fee_percentage < 0) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'fee_percentage should be a greater than or equal to 0';
+	END IF;
+
+	INSERT INTO upi_customer (ssn, account_number, email_id, pin)
+	VALUES (ssn, account_number, email_id, pin);
+	INSERT INTO merchant (gst_number, fee_percentage, building_name, street_name, city, state, addressPin, ssn, account_number)
+	VALUES (gst_number, fee_percentage, building_name, street_name, city, state, addressPin, ssn, account_number);
+END//
+DELIMITER ;
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
