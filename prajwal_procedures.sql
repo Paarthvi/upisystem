@@ -71,8 +71,25 @@ END//
 DELIMITER ;
 	
 	
-	
-	
+DROP PROCEDURE IF EXISTS depositeMoneyInBank;
+DELIMITER //
+CREATE PROCEDURE depositeMoneyInBank(
+	account_number VARCHAR(10) PRIMARY KEY,
+    amount DOUBLE)
+BEGIN
+	DECLARE currentBalance DOUBLE DEFAULT 0;
+	DECLARE newBalance DOUBLE DEFAULT currentBalance;
+	IF (amount < 0) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Deposite amount should be greater than 0';
+	END IF;
+	SELECT balance INTO currentBalance FROM bank_account WHERE account_number IS account_number;
+	SET newBalance = currentBalance + amount;
+	UPDATE bank_account SET balance = newBalance WHERE account_number = account_number; 
+	INSERT INTO bank_transactions ()
+END//
+DELIMITER ;
+
+
 	
 	
 	
