@@ -7,7 +7,6 @@ def create_app():
     app.config['SECRET_KEY'] = 'PS'
     app.register_blueprint(views, url_prefix= "/")
     app.register_blueprint(auth, url_prefix= "/")
-
     return app
 
 # if __name__ == 'main':

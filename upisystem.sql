@@ -11,7 +11,7 @@ CREATE TABLE individual (
     street_name VARCHAR(50),
     city VARCHAR(50),
     state VARCHAR(50),
-    pin VARCHAR(6),
+    pin VARCHAR(5),
     phone_number VARCHAR(10) UNIQUE,
     login_password VARCHAR(255)
 );
@@ -24,7 +24,7 @@ CREATE TABLE bank (
     street_name VARCHAR(50),
     city VARCHAR(50),
     state VARCHAR(50),
-    pin VARCHAR(6)
+    pin VARCHAR(5)
 );
 
 
@@ -36,11 +36,21 @@ CREATE TABLE branch (
     street_name VARCHAR(50),
     city VARCHAR(50),
     state VARCHAR(50),
-    pin VARCHAR(6),
+    pin VARCHAR(5),
     CONSTRAINT branch_bank_reg_id 
 		FOREIGN KEY (bank_reg_id) REFERENCES bank (bank_reg_id)
         ON UPDATE CASCADE ON DELETE CASCADE
 );
+
+INSERT INTO bank (bank_name, bank_reg_id, routing_number, building_number, street_name, city, state, pin)
+	VALUES ("SBI", 10, 12345, 30, "Park St", "Boston", "MA",  "02215");
+
+INSERT INTO bank (bank_name, bank_reg_id, routing_number, building_number, street_name, city, state, pin)
+	VALUES ("SBI", 10, 12345, 30, "Park St", "Boston", "MA". "02215");
+
+
+INSERT INTO branch (branch_id, bank_reg_id, branch_name, building_number, street_name, city, state, pin) 
+	VALUES ("SBI01", 10, "Boylston st branch", 12345, "Boylston St", "Boston", "MA", "02215" );
 
 CREATE TABLE bank_account (
 	ssn VARCHAR(8),
@@ -134,7 +144,7 @@ CREATE TABLE merchant (
     street_name VARCHAR(50),
     city VARCHAR(50),
     state VARCHAR(50),
-    pin VARCHAR(6),
+    pin VARCHAR(5),
     ssn VARCHAR(20),
     account_number VARCHAR(10),
     PRIMARY KEY (ssn, account_number),
@@ -146,7 +156,13 @@ CREATE TABLE merchant (
         ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-
+CREATE TABLE branch_transaction_id ( 
+	branch_id VARCHAR(5) PRIMARY KEY,
+	next_transaction VARCHAR(10),
+	CONSTRAINT branch_transaction_id_branch_id
+		FOREIGN KEY (branch_id) REFERENCES branch (branch_id)
+		ON UPDATE CASCADE ON DELETE CASCADE
+);
 
 
 

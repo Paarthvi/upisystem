@@ -1,4 +1,6 @@
 USE upi_system;
+-- SET GLOBAL log_bin_trust_function_creators = 1;
+-- The above command has to be set;
 
 DROP PROCEDURE IF EXISTS createBranch;
 DELIMITER //
@@ -74,23 +76,98 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS depositeMoneyInBank;
 DELIMITER //
 CREATE PROCEDURE depositeMoneyInBank(
-	account_number VARCHAR(10) PRIMARY KEY,
-    amount DOUBLE)
+	account_number VARCHAR(10),
+    amount DOUBLE,
+    date_of_transaction DATE)
 BEGIN
 	DECLARE currentBalance DOUBLE DEFAULT 0;
 	DECLARE newBalance DOUBLE DEFAULT currentBalance;
+	DECLARE fetched_branch_id VARCHAR(5);
+	IF (checkLength(account_number, 10) != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number should be 10 digits long';
+	END IF;
 	IF (amount < 0) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Deposite amount should be greater than 0';
 	END IF;
-	SELECT balance INTO currentBalance FROM bank_account WHERE account_number IS account_number;
+	IF (SELECT COUNT(account_number) FROM bank_account WHERE account_number = account_number != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number is invalid';
+	END IF;
+	SELECT balance INTO currentBalance FROM bank_account WHERE account_number = account_number;
 	SET newBalance = currentBalance + amount;
-	UPDATE bank_account SET balance = newBalance WHERE account_number = account_number; 
-	INSERT INTO bank_transactions ()
+	UPDATE bank_account SET balance = newBalance WHERE account_number = account_number;
+	SELECT branch_id INTO fetched_branch_id FROM bank_account WHERE account_number = account_number;
+	INSERT INTO bank_transactions (SELECT incrementNextTransactionId(fetched_branch_id), "CREDIT", 
+		account_number, "InPerDepos", date_of_transaction, amount, "In person deposit");
 END//
 DELIMITER ;
 
+SELECT * FROM bank_transactions;
+SELECT * FROM bank_account;
+SELECT * FROM branch;
 
-	
+-- USE upi_system;
+-- SELECT * FROM branch_transaction_id;
+-- SELECT * FROM branch;
+-- INSERT INTO branch_transaction_id (branch_id, next_transaction) VALUES ("SBI01", right(CONCAT('00000', cast(1 as char(5))), 5));
+-- 
+-- UPDATE branch_transaction_id SET next_transaction = CONCAT("SBI01", right(CONCAT('00000', cast(1 as char(5))), 5)) WHERE branch_id = "SBI01";
+-- SELECT CAST(next_transaction AS UNSIGNED) as col FROM branch_transaction_id WHERE branch_id = "SBI01";
+-- -- right('00000' + cast(Your_Field as varchar(5)), 5);
+-- DELETE FROM branch_transaction_id WHERE branch_id = "SBI01";
+-- 
+-- SELECT * FROM branch_transaction_id WHERE branch_id = "SBI01";
+-- SELECT incrementNextTransactionId("SBI01");
+
+-- DROP PROCEDURE IF EXISTS incrementNextTransactionId;
+-- DELIMITER //
+-- CREATE PROCEDURE incrementNextTransactionId(selected_branch_id VARCHAR(5))
+-- BEGIN
+-- 	DECLARE current_transaction_id INT;
+-- 	IF (SELECT COUNT(branch_id) FROM branch_transaction_id WHERE branch_id = selected_branch_id = 1) THEN
+-- 		SELECT CAST(RIGHT(next_transaction, 5) AS UNSIGNED) INTO current_transaction_id FROM branch_transaction_id WHERE branch_id = selected_branch_id;
+-- 		SET current_transaction_id = current_transaction_id + 1;
+-- 		UPDATE branch_transaction_id SET next_transaction = CONCAT(selected_branch_id, 
+-- 			right(CONCAT('00000', cast(current_transaction_id as char(5))), 5)) 
+-- 			WHERE branch_id = selected_branch_id;
+-- 	ELSE
+-- 		IF (SELECT COUNT(branch_id) FROM branch WHERE branch_id = selected_branch_id = 1) THEN
+-- 			INSERT INTO branch_transaction_id (branch_id, next_transaction) VALUES (selected_branch_id, 
+-- 				CONCAT(selected_branch_id, right(CONCAT('00000', cast(1 as char(5))), 5)));
+-- 		ELSE
+-- 			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Branch ID is invalid';
+-- 		END IF;
+-- 	END IF;
+-- END//
+-- DELIMITER ;
+
+DROP FUNCTION IF EXISTS incrementNextTransactionId;
+DELIMITER //
+CREATE FUNCTION incrementNextTransactionId(selected_branch_id VARCHAR(5))
+RETURNS CHAR(10)
+NOT DETERMINISTIC MODIFIES SQL DATA
+BEGIN
+	DECLARE to_return CHAR(10);
+	DECLARE current_transaction_id INT;
+	IF (SELECT COUNT(branch_id) FROM branch_transaction_id WHERE branch_id = selected_branch_id = 1) THEN
+		SELECT CAST(RIGHT(next_transaction, 5) AS UNSIGNED) INTO current_transaction_id FROM branch_transaction_id WHERE branch_id = selected_branch_id;
+		SET current_transaction_id = current_transaction_id + 1;
+		UPDATE branch_transaction_id SET next_transaction = CONCAT(selected_branch_id, 
+			right(CONCAT('00000', cast(current_transaction_id as char(5))), 5)) 
+			WHERE branch_id = selected_branch_id;
+		SELECT next_transaction INTO to_return FROM branch_transaction_id WHERE branch_id = selected_branch_id;
+	ELSE
+		IF (SELECT COUNT(branch_id) FROM branch WHERE branch_id = selected_branch_id = 1) THEN
+			INSERT INTO branch_transaction_id (branch_id, next_transaction) VALUES (selected_branch_id, 
+				CONCAT(selected_branch_id, right(CONCAT('00000', cast(1 as char(5))), 5)));
+			SELECT next_transaction INTO to_return FROM branch_transaction_id WHERE branch_id = selected_branch_id;
+		ELSE
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Branch ID is invalid';
+		END IF;
+	END IF;
+	RETURN to_return;
+END//
+DELIMITER ;
+
 	
 	
 	
