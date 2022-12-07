@@ -1,0 +1,76 @@
+{%extends "base.html"%}
+{%block title%}Sign Up{%endblock%}
+
+{%block content%}
+<form method = "POST">
+    <h3 align = "center"> Make Bank to Bank transaction </h3>
+    <div class ="form-group">
+        <label for="senderAccountNumber">Sender Account Number</label>
+        <input
+                type="senderAccountNumber"
+                class="form-control"
+                id="senderAccountNumber"
+                name="senderAccountNumber"
+                placeholder="Enter senders account number"
+        />
+    </div>
+    <div class ="form-group">
+        <label for="receiverAccountNumber">Receiver Account Number</label>
+        <input
+                type="receiverAccountNumber"
+                class="form-control"
+                id="receiverAccountNumber"
+                name="receiverAccountNumber"
+                placeholder="Enter receiver account number"
+        />
+    </div>
+    <div class ="form-group">
+        <label for="transactionAmount">Amount to be transfered</label>
+        <input
+                type="transactionAmount"
+                class="form-control"
+                id="transactionAmount"
+                name="transactionAmount"
+                placeholder="Enter amount to be transfered"
+        />
+    </div>
+    <br />
+    <button id = "makeTransaction" type="makeTransaction" class="btn btn-primary">Make transaction</button>
+</form>
+<form method = "POST">
+    <h3 align = "center"> Create Bank account </h3>
+    <a href="/bankDetails">Bank and Branch ID</a>
+    <div class ="form-group">
+        <label for="bankName">Bank name</label>
+        <input
+                type="bankName"
+                class="form-control"
+                id="bankName"
+                name="bankName"
+                placeholder="Enter bank name"
+        />
+    </div>
+    <div class ="form-group">
+        <label for="bankBranchId">Bank Branch ID</label>
+        <input
+                type="bankBranchId"
+                class="form-control"
+                id="bankBranchId"
+                name="bankBranchId"
+                placeholder="Enter bank branch ID"
+        />
+    </div>
+    <div class ="form-group">
+        <label for="initialDepositeAmount">Initial deposite amount</label>
+        <input
+                type="initialDepositeAmount"
+                class="form-control"
+                id="initialDepositeAmount"
+                name="initialDepositeAmount"
+                placeholder="Enter initial amount to be deposited"
+        />
+    </div>
+    <br />
+    <button id = "createBankAccount" type="createBankAccout" class="btn btn-primary">Create bank account</button>
+</form>
+{%endblock%}

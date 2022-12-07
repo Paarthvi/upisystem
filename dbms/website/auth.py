@@ -48,7 +48,7 @@ def sign_up():
         elif len(houseNumber) > 5:
             flash("House number should be less tha 6 characters", category='error')
             faced_error = True
-        elif len(pin) != 5:
+        elif len(pinCode) != 5:
             flash("PIN code is invalid, it has to be 5 digit", category='error')
             faced_error = True
         elif len(phoneNumber)!=10:
