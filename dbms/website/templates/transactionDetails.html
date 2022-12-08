@@ -1,0 +1,7 @@
+{%extends "userInfoBase.html"%}
+{%block title%}Transaction Details{%endblock%}
+<h3 align = "center"> Transaction Details </h3>
+{%for i in range(0, length)%}
+<li>{{transactionDetails[i]}}</li>
+{%endfor%}
+{%block content%}
