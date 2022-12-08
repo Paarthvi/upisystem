@@ -30,7 +30,7 @@ CREATE TABLE bank (
 
 CREATE TABLE branch (
 	branch_id VARCHAR(5) PRIMARY KEY,
-    bank_reg_id INT UNIQUE,
+    bank_reg_id INT,
     branch_name VARCHAR(50),
     building_number INT,
     street_name VARCHAR(50),
