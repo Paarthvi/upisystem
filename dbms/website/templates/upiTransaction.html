@@ -1,0 +1,58 @@
+{%extends "base.html"%}
+{%block title%}UPI Transaction{%endblock%}
+
+{%block content%}
+<form method = "POST">
+    <h3 align = "center"> Make UPI Transaction </h3>
+    <div class ="form-group">
+        <label for="receiverUpiId">Receiver UPI Id</label>
+        <input
+                type="receiverUpiId"
+                class="form-control"
+                id="receiverUpiId"
+                name="receiverUpiId"
+                placeholder="Enter receiver UPI ID"
+        />
+    </div>
+    <div class ="form-group">
+        <label for="transactionAmount">Amount to be transferred</label>
+        <input
+                type="transactionAmount"
+                class="form-control"
+                id="transactionAmount"
+                name="transactionAmount"
+                placeholder="Enter amount to be transferred"
+        />
+    </div>
+    <div class ="form-group">
+        <label for="transactionMessage">Transaction message</label>
+        <input
+                type="transactionMessage"
+                class="form-control"
+                id="transactionMessage"
+                name="transactionMessage"
+                placeholder="Enter transaction message"
+        />
+    </div>
+    <br />
+    <button id = "makeUpiTransaction" type="makeUpiTransaction" class="btn btn-primary">Make UPI transaction</button>
+</form>
+<form method = "POST">
+    <h3 align = "center"> Register to UPI </h3>
+<!--    <a href="/bankDetails">Bank and Branch ID</a>-->
+    <div class ="form-group">
+        <label for="bankAccount">Bank name</label>
+        <input
+                type="bankAccount"
+                class="form-control"
+                id="bankAccount"
+                name="bankAccount"
+                placeholder="Enter bank account"
+        />
+    </div>
+    <br />
+    <button id = "registerToUPI" type="registerToUPI" class="btn btn-primary">Register to UPI</button>
+<!--    <h3 align = "center"> If you don't have a bank account, click below to create one: </h3>-->
+<!--    <a href="/bankTransaction">Create Bank Account</a>-->
+</form>
+{%endblock%}
