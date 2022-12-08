@@ -30,5 +30,14 @@ CALL addIndividual('12345602','Glen','Aaron Albert','101','1209 Boylston St','Bo
 CALL addIndividual('12345678','Prajwal','Shenoy','44','1209 Boylston St','Boston','MA','02215','9294219425','prajwal');
 CALL addIndividual('12345679','Paarthvi','Sharma','18','143 Park St','Boston','MA','02215','9142336508','paarthvi');
 
+CALL createBankAccount('12345678', '00005', '0000000001', 6000, '2022-09-02');
+CALL createBankAccount('12345678', '00005', '0000000002', 1000, '2022-09-02');
 
-SELECT bank_name, branch_id, branch.pin FROM bank JOIN branch ON bank.bank_reg_id = branch.bank_reg_id;
+CALL createBankAccount('12345679', '00003', '0000000007', 8895, '2022-09-02');
+CALL createBankAccount('12345679', '00006', '0000000008', 9554, '2022-09-02');
+
+CALL createBankAccount('12345601', '00001', '0000000003', 5000, '2022-09-02');
+CALL createBankAccount('12345601', '00004', '0000000004', 3000, '2022-09-03');
+
+CALL createBankAccount('12345602', '00005', '0000000005', 7000, '2022-09-02');
+CALL createBankAccount('12345602', '00002', '0000000006', 1111, '2022-09-02');

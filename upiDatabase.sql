@@ -1,4 +1,5 @@
 DROP DATABASE IF EXISTS upi_system;
+SET GLOBAL log_bin_trust_function_creators = 1;
 CREATE DATABASE upi_system;
 
 USE upi_system;
@@ -286,7 +287,7 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS depositeMoneyInBank;
 DELIMITER //
 CREATE PROCEDURE depositeMoneyInBank(
-	account_number VARCHAR(10),
+	selected_account_number VARCHAR(10),
     amount DOUBLE,
     date_of_transaction DATE)
 BEGIN
@@ -294,21 +295,21 @@ BEGIN
 	DECLARE newBalance DOUBLE DEFAULT currentBalance;
 	DECLARE fetched_branch_id VARCHAR(5);
 	START TRANSACTION;
-	IF (checkLength(account_number, 10) != 1) THEN
+	IF (checkLength(selected_account_number, 10) != 1) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number should be 10 digits long';
 	END IF;
 	IF (amount < 0) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Deposite amount should be greater than 0';
 	END IF;
-	IF (SELECT COUNT(account_number) FROM bank_account WHERE account_number = account_number != 1) THEN
+	IF (SELECT COUNT(account_number) != 1 FROM bank_account WHERE account_number = selected_account_number) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number is invalid';
 	END IF;
-	SELECT balance INTO currentBalance FROM bank_account WHERE account_number = account_number;
+	SELECT balance INTO currentBalance FROM bank_account WHERE account_number = selected_account_number;
 	SET newBalance = currentBalance + amount;
-	UPDATE bank_account SET balance = newBalance WHERE account_number = account_number;
-	SELECT branch_id INTO fetched_branch_id FROM bank_account WHERE account_number = account_number;
+	UPDATE bank_account SET balance = newBalance WHERE account_number = selected_account_number;
+	SELECT branch_id INTO fetched_branch_id FROM bank_account WHERE account_number = selected_account_number;
 	INSERT INTO bank_transactions (SELECT incrementNextTransactionId(fetched_branch_id), "CREDIT", 
-		account_number, "InPerDepos", date_of_transaction, amount, "In person deposit");
+		selected_account_number, "InPerDepos", date_of_transaction, amount, "In person deposit");
 	COMMIT;
 END//
 DELIMITER ;
@@ -395,14 +396,36 @@ DELIMITER //
 CREATE PROCEDURE bankTransaction(
         account_number_sender VARCHAR(10),
         account_number_receiver VARCHAR(10),
-        amount_to_transfer double)
+        amount_to_transfer double,
+		date_of_transaction DATE,
+        message VARCHAR(50))
 BEGIN
+	DECLARE source_branch_id VARCHAR(5);
+	DECLARE desination_branch_id VARCHAR(5);
 	START TRANSACTION;
 	IF (checkLength(account_number_sender, 10) != 1) THEN
-		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number should be 10 characters';
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sender Account number should be 10 characters';
 	END IF;
-    UPDATE bank_account SET amount = (amount + amount_to_transfer) WHERE account_number = account_number_receiver;
-    UPDATE bank_account SET amount = (amount - amount_to_transfer) WHERE account_number = account_number_sender;
+	IF (checkLength(account_number_receiver, 10) != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Receiver Account number should be 10 digits long';
+	END IF;
+	IF (amount_to_transfer < 0) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Transaction amount should be greater than 0';
+	END IF;
+	IF (SELECT COUNT(account_number_receiver) != 1 FROM bank_account WHERE account_number = account_number_receiver) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Receiver Account number is invalid';
+	END IF;
+	IF (SELECT COUNT(account_number_sender) != 1 FROM bank_account WHERE account_number = account_number_sender) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sender Account number is invalid';
+	END IF;
+	SELECT branch_id INTO source_branch_id FROM bank_account WHERE account_number = account_number_sender;
+	SELECT branch_id INTO desination_branch_id FROM bank_account WHERE account_number = account_number_receiver;
+    UPDATE bank_account SET balance = (balance + amount_to_transfer) WHERE account_number = account_number_receiver;
+    UPDATE bank_account SET balance = (balance - amount_to_transfer) WHERE account_number = account_number_sender;
+    INSERT INTO bank_transactions (SELECT incrementNextTransactionId(source_branch_id), "DEBIT", 
+		account_number_sender, account_number_receiver, date_of_transaction, amount_to_transfer, message);
+	INSERT INTO bank_transactions (SELECT incrementNextTransactionId(desination_branch_id), "CREDIT", 
+		account_number_receiver, account_number_sender, date_of_transaction, amount_to_transfer, message);
     COMMIT;
 END//
 DELIMITER ;
@@ -438,3 +461,23 @@ DELIMITER ;
     
    
 
+DROP FUNCTION IF EXISTS checkIfAccountBelongsToSSN;
+DELIMITER //
+CREATE FUNCTION checkIfAccountBelongsToSSN(selected_ssn VARCHAR(8), selected_bank_account VARCHAR(10))
+RETURNS BOOLEAN
+NOT DETERMINISTIC READS SQL DATA
+BEGIN
+	DECLARE to_return BOOLEAN;
+	SET to_return = 0;
+	IF (checkLength(selected_ssn, 8) != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SSN should be 8 characters long';
+	END IF;
+	IF (checkLength(selected_bank_account, 10) != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number should be 10 digits long';
+	END IF;
+	IF (SELECT COUNT(ssn) = 1 FROM bank_account WHERE ssn = selected_ssn AND account_number = selected_bank_account) THEN
+		SET to_return = 1;
+	END IF;
+	return to_return;
+END//
+DELIMITER ;
