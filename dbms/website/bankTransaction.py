@@ -8,6 +8,9 @@ cursor = conn.cursor()
 
 @banktransaction.route('/bankTransaction', methods = ['GET', 'POST'])
 def bankTransaction():
+    if 'ssn' not in session.keys():
+            flash("Login to a user first", category='error')
+            return redirect('/login')
     if request.method == 'GET':
         return render_template("bankTransaction.html")
     if request.method == 'POST':
@@ -43,6 +46,9 @@ def makeBankTransaction(received_data):
 
 @banktransaction.route('/bankDetails', methods = ['GET'])
 def bankDetails():
+    if 'ssn' not in session.keys():
+            flash("Login to a user first", category='error')
+            return redirect('/login')
     cursor.execute("SELECT bank_name, branch_id, branch.pin FROM bank JOIN branch ON bank.bank_reg_id = branch.bank_reg_id;")
     all_rows = cursor.fetchall()
     table = """<table>

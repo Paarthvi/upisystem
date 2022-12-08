@@ -6,10 +6,10 @@ cursor = conn.cursor()
 
 @userprofile.route('/userProfile', methods = ['GET', 'POST'])
 def viewUserProfile():
-    if request.method == 'GET':
-        if 'ssn' not in session.keys():
+    if 'ssn' not in session.keys():
             flash("Login to a user first", category='error')
             return redirect('/login')
+    if request.method == 'GET':
         return render_template("userProfile.html",
                                firstName=session['first_name'],
                                lastName=session['last_name'],
@@ -23,6 +23,9 @@ def viewUserProfile():
 
 @userprofile.route('/accountDetails', methods = ['GET'])
 def bankDetails():
+    if 'ssn' not in session.keys():
+            flash("Login to a user first", category='error')
+            return redirect('/login')
     ssn = session['ssn']
     cursor.execute("SELECT bank_name, branch.branch_id, account_number,"
                    " branch.building_number, branch.street_name, branch.city, "
