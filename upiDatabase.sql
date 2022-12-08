@@ -433,28 +433,28 @@ DELIMITER ;
 DROP PROCEDURE IF EXISTS withdrawMoneyfromBank;
 DELIMITER //
 CREATE PROCEDURE withdrawMoneyfromBank(
-	account_number VARCHAR(10),
+	   selected_account_number VARCHAR(10),
        amount DOUBLE,
        date_of_transaction DATE)
 BEGIN
 	DECLARE fetched_branch_id VARCHAR(5);
 	START TRANSACTION;
-	IF (checkLength(account_number, 10) != 1) THEN
+	IF (checkLength(selected_account_number, 10) != 1) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number should be 10 digits long';
 	END IF;
 	IF (amount < 0) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Withdrawal amount should be greater than 0';
 	END IF;
-	IF (SELECT COUNT(account_number) FROM bank_account WHERE account_number = account_number != 1) THEN
+	IF (SELECT COUNT(account_number) != 1 FROM bank_account WHERE account_number = selected_account_number) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number is invalid';
 	END IF;
-	IF (SELECT balance < amount FROM bank_account WHERE account_number = account_number) THEN
+	IF (SELECT balance < amount FROM bank_account WHERE account_number = selected_account_number) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient balance';
 	END IF;
-    UPDATE bank_account SET balance = (balance - amount) WHERE account_number = account_number;
-   	SELECT branch_id INTO fetched_branch_id FROM bank_account WHERE account_number = account_number;
+    UPDATE bank_account SET balance = (balance - amount) WHERE account_number = selected_account_number;
+   	SELECT branch_id INTO fetched_branch_id FROM bank_account WHERE account_number = selected_account_number;
 	INSERT INTO bank_transactions (SELECT incrementNextTransactionId(fetched_branch_id), "DEBIT", 
-		account_number, "InPerWithd", date_of_transaction, amount, "In person withdrawal");
+		selected_account_number, "InPerWithd", date_of_transaction, amount, "In person withdrawal");
 	COMMIT;
 END//
 DELIMITER ;
