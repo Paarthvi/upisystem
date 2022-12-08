@@ -22,6 +22,26 @@ def login():
 @auth.route('/logout')
 def logout():
     return "<p>Logout</p>"
+@auth.route('/transaction')
+def transaction():
+    if request.method == 'GET':
+        return render_template("transaction.html")
+
+@auth.route('/viewTransaction', methods =['GET','POST'])
+def viewTransaction():
+    if request.method == 'GET':
+        return render_template("viewTransaction.html")
+    if request.method == 'POST':
+        accountNumber = request.form.get('bankAccountNumber')
+        print(request.form)
+        if len(accountNumber)!=10:
+            flash("Account number should be 10 characters", category='error')
+    return render_template("viewTransaction.html")
+
+
+
+
+
 
 @auth.route('/sign-up', methods =['GET','POST'])
 def sign_up():
@@ -46,7 +66,7 @@ def sign_up():
             flash("Invalid SSN. SSN should be 8 characters long", category='error')
             faced_error = True
         elif len(houseNumber) > 5:
-            flash("House number should be less tha 6 characters", category='error')
+            flash("House number should be less than 6 characters", category='error')
             faced_error = True
         elif len(pinCode) != 5:
             flash("PIN code is invalid, it has to be 5 digit", category='error')
