@@ -1,4 +1,4 @@
-from flask import Blueprint,render_template, request, flash, session
+from flask import Blueprint,render_template, request, flash, session, redirect
 from .dbConnection import conn
 from datetime import date
 
