@@ -1,0 +1,45 @@
+{%extends "base.html"%}
+{%block title%}User Profile{%endblock%}
+
+{%block content%}
+<form method = "POST">
+    <h3 align = "center"> User Profile</h3>
+    <div class ="form-group">
+        <label>First Name:</label>
+        <label>{{firstName}}</label>
+        <br />
+        <label>Last Name:</label>
+        <label>{{lastName}}</label>
+        <br />
+        <label>SSN:</label>
+        <label>{{ssn}}</label>
+        <br />
+        <label>House number:</label>
+        <label>{{houseNumber}}</label>
+        <br />
+        <label>Street Name:</label>
+        <label>{{streetName}}</label>
+        <br />
+        <label>City:</label>
+        <label>{{city}}</label>
+        <br />
+        <label>State:</label>
+        <label>{{state}}</label>
+        <br />
+        <label>Pin:</label>
+        <label>{{pin}}</label>
+        <br />
+        <a href="/accountDetails">Account Details</a>
+        <br />
+        <label for="bankAccountNumber">Enter the account number to be deleted:</label>
+        <input
+                type="bankAccountNumber"
+                class="form-control"
+                id="bankAccountNumber"
+                name="bankAccountNumber"
+                placeholder="Enter bank account number"
+        />
+    </div>
+    <button id = "viewTransaction" type="viewTransaction" class="btn btn-primary">Delete Account</button>
+</form>
+{%endblock%}
