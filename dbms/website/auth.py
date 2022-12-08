@@ -1,4 +1,4 @@
-from flask import Blueprint,render_template, request, flash
+from flask import Blueprint,render_template, request, flash, redirect, session
 from .dbConnection import conn
 import hashlib
 
@@ -13,15 +13,41 @@ def login():
         cursor.execute("SELECT verifyPassword(%s, %s)", (phoneNumber, password))
         all_rows = cursor.fetchall()
         if (all_rows[0][0] == 1):
+            cursor.execute("SELECT * FROM individual WHERE phone_number = %s;", (phoneNumber,))
+            fetchedRows = cursor.fetchall()
+            print(fetchedRows)
+            session["loggedin"] = True
+            session["ssn"] = fetchedRows[0][0]
+            session["first_name"] = fetchedRows[0][1]
+            session["last_name"] = fetchedRows[0][2]
+            session["house_number"] = fetchedRows[0][3]
+            session["street_name"] = fetchedRows[0][4]
+            session["city"] = fetchedRows[0][5]
+            session["state"] = fetchedRows[0][6]
+            session["pin"] = fetchedRows[0][7]
+            session["phone_number"] = fetchedRows[0][8]
             flash("Login is successfull")
-            return render_template("home.html")
+            # return render_template("transaction.html")
+            return redirect("/transaction")
         else:
             flash("Login failed, user or password is wrong", category='error')
     return render_template("login.html")
 
 @auth.route('/logout')
 def logout():
-    return "<p>Logout</p>"
+    session.pop("loggedin", None)
+    session.pop("ssn", None)
+    session.pop("first_name", None)
+    session.pop("last_name", None)
+    session.pop("house_number", None)
+    session.pop("street_name", None)
+    session.pop("city", None)
+    session.pop("state", None)
+    session.pop("pin", None)
+    session.pop("phone_number", None)
+    flash("Logged out")
+    return redirect("/login")
+
 @auth.route('/transaction')
 def transaction():
     if request.method == 'GET':
@@ -41,11 +67,6 @@ def viewTransaction():
             print(i)
         print(request.form)
     return render_template("viewTransaction.html")
-
-
-
-
-
 
 @auth.route('/sign-up', methods =['GET','POST'])
 def sign_up():
@@ -92,6 +113,4 @@ def sign_up():
             args = (ssn, firstName, lastName, houseNumber, streetName, city, state, pinCode, phoneNumber, password1)
             cursor.callproc("addIndividual", args)
             return render_template("home.html")
-    
-
     return render_template("sign_up.html")
