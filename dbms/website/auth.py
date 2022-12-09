@@ -28,7 +28,7 @@ def login():
             session["phone_number"] = fetchedRows[0][8]
             flash("Login is successfull")
             # return render_template("transaction.html")
-            return redirect("/transaction")
+            return redirect("/")
         else:
             flash("Login failed, user or password is wrong", category='error')
     return render_template("login.html")
