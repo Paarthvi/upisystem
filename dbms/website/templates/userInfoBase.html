@@ -43,6 +43,7 @@ table, th, td {
     </button>
     <div class="collapse navbar-collapse" id="navbar">
         <div class="navbar-nav">
+            <a class="nav-item nav-link" id="welcome">Welcome {{ session['first_name'] }}</a>
             <a class="nav-item nav-link" id="home" href="/">Home</a>
             <a class="nav-item nav-link" id="transaction" href="/transaction">Transaction</a>
             <a class="nav-item nav-link" id="bankransaction" href="/bankTransaction">Bank Transaction</a>
@@ -52,6 +53,7 @@ table, th, td {
             <a class="nav-item nav-link" id="logout" href="/logout">Logout</a>
         </div>
     </div>
+
 </nav>
 {% with messages = get_flashed_messages(with_categories=true) %}
 {% if messages %}
@@ -93,12 +95,6 @@ table, th, td {
         type="text/javascript"
         src="{{ url_for('static', filename='index.js') }}"
 ></script>
-
-<script
-        type="img"
-        src="{{ url_for('static', filename='kgbupi.jpg') }}"
-></script>
-
 </body>
 
 </html>
