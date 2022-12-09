@@ -42,28 +42,37 @@ def bankDetails():
     cursor.callproc("viewAccountDetails", (ssn,))
     for result in cursor.stored_results():
         all_rows=result.fetchall()
-    table = """<table>
-                <tr>
-                    <th>Bank Name</th>
-                    <th>Branch ID</th>
-                    <th>Bank Account</th>
-                    <th>Balance</th>
-                    <th>Building Number</th>
-                    <th>Street Name</th>
-                    <th>City</th>
-                    <th>Pin</th>
-                </tr>\n"""
-    for i in all_rows:
-        table += f"""<tr>
-                    <td>{i[0]}</td>
-                    <td>{i[1]}</td>
-                    <td>{i[2]}</td>
-                    <td>{i[3]}</td>
-                    <td>{i[4]}</td>
-                    <td>{i[5]}</td>
-                    <td>{i[6]}</td>
-                    <td>{i[7]}</td>
-                </tr>\n"""
-    table += "</table>"
+    cursor.callproc("viewUPIConsumerDetailsForSSN", (ssn,))
+    for result in cursor.stored_results():
+        all_rows_consumer = result.fetchall()
+    cursor.callproc("viewUPIMerchantDetailsForSSN", (ssn,))
+    for result in cursor.stored_results():
+        all_rows_merchant = result.fetchall()
+    # table = """<table>
+    #             <tr>
+    #                 <th>Bank Name</th>
+    #                 <th>Branch ID</th>
+    #                 <th>Bank Account</th>
+    #                 <th>Balance</th>
+    #                 <th>Building Number</th>
+    #                 <th>Street Name</th>
+    #                 <th>City</th>
+    #                 <th>Pin</th>
+    #             </tr>\n"""
+    # for i in all_rows:
+    #     table += f"""<tr>
+    #                 <td>{i[0]}</td>
+    #                 <td>{i[1]}</td>
+    #                 <td>{i[2]}</td>
+    #                 <td>{i[3]}</td>
+    #                 <td>{i[4]}</td>
+    #                 <td>{i[5]}</td>
+    #                 <td>{i[6]}</td>
+    #                 <td>{i[7]}</td>
+    #             </tr>\n"""
+    # table += "</table>"
     # return table
-    return render_template("userBankDetails.html", length=len(all_rows), table_list=all_rows)
+    return render_template("userBankDetails.html", length=len(all_rows), table_list=all_rows,
+                           consumer_length = len(all_rows_consumer), consumer_table_list = all_rows_consumer,
+                           merchant_length = len(all_rows_merchant), merchant_table_list = all_rows_merchant)
+
