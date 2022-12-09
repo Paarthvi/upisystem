@@ -27,13 +27,15 @@ def bankDetails():
             flash("Login to a user first", category='error')
             return redirect('/login')
     ssn = session['ssn']
-    cursor.execute("CALL viewAccountDetails(%s);", (ssn,))
+    cursor.callproc("viewAccountDetails", (ssn,))
     # cursor.execute("SELECT bank_name, branch.branch_id, account_number, balance,"
     #                " branch.building_number, branch.street_name, branch.city, "
     #                "branch.pin FROM bank_account "
     #                "JOIN branch ON  bank_account.branch_id = branch.branch_id "
     #                "JOIN bank ON bank.bank_reg_id = branch.bank_reg_id where ssn =  %s;",(ssn,))
-    all_rows = cursor.fetchall()
+    # all_rows = cursor.fetchall()
+    for result in cursor.stored_results():
+        all_rows=result.fetchall()
     table = """<table>
                 <tr>
                     <th>Bank Name</th>

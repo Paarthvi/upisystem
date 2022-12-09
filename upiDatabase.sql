@@ -104,8 +104,7 @@ CREATE TABLE commercial_transaction (
 CREATE TABLE upi_customer (
 	ssn VARCHAR(8),
     account_number VARCHAR(10),
-    email_id VARCHAR(50),
-    pin INT,
+    email_id VARCHAR(50) UNIQUE,
     PRIMARY KEY (ssn, account_number),
     CONSTRAINT upi_customer_ssn
 		FOREIGN KEY (ssn) REFERENCES individual (ssn)
@@ -236,15 +235,14 @@ DELIMITER //
 CREATE PROCEDURE registerForUPIConsumer(
 	ssn VARCHAR(8),
 	account_number VARCHAR(10),
-	email_id VARCHAR(50),
-	pin INT)
+	email_id VARCHAR(50))
 BEGIN
 	START TRANSACTION;
 	IF (checkLength(ssn, 8) != 1) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SSN should be 8 characters';
 	END IF;
-	INSERT INTO upi_customer (ssn, account_number, email_id, pin)
-	VALUES (ssn, account_number, email_id, pin);
+	INSERT INTO upi_customer (ssn, account_number, email_id)
+	VALUES (ssn, account_number, email_id);
 	INSERT INTO consumer (ssn, account_number)
 	VALUES (ssn, account_number);
 	COMMIT;
@@ -258,7 +256,6 @@ CREATE PROCEDURE registerForUPIMerchant(
 	ssn VARCHAR(8),
 	account_number VARCHAR(10),
 	email_id VARCHAR(50),
-	pin INT,
 	gst_number VARCHAR(10),
     fee_percentage FLOAT,
     building_name VARCHAR(50),
@@ -275,8 +272,8 @@ BEGIN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'fee_percentage should be a greater than or equal to 0';
 	END IF;
 
-	INSERT INTO upi_customer (ssn, account_number, email_id, pin)
-	VALUES (ssn, account_number, email_id, pin);
+	INSERT INTO upi_customer (ssn, account_number, email_id)
+	VALUES (ssn, account_number, email_id);
 	INSERT INTO merchant (gst_number, fee_percentage, building_name, street_name, city, state, addressPin, ssn, account_number)
 	VALUES (gst_number, fee_percentage, building_name, street_name, city, state, addressPin, ssn, account_number);
 	COMMIT;
@@ -340,6 +337,23 @@ BEGIN
 		END IF;
 	END IF;
 	RETURN to_return;
+END//
+DELIMITER ;
+
+DROP FUNCTION IF EXISTS incrementUPITransactionId;
+DELIMITER //
+CREATE FUNCTION incrementUPITransactionId()
+RETURNS CHAR(10)
+NOT DETERMINISTIC READS SQL DATA
+BEGIN
+	DECLARE current_transaction_id INT;
+	IF (SELECT COUNT(upi_transaction_id) > 0 FROM upi_transaction) THEN
+		SELECT CAST(upi_transaction_id AS UNSIGNED) INTO current_transaction_id FROM upi_transaction ORDER BY upi_transaction_id DESC LIMIT 1;
+		SET current_transaction_id = current_transaction_id + 1;
+		return right(CONCAT('0000000000', cast(current_transaction_id as char(10))), 10);
+	ELSE
+		return '0000000001';
+	END IF;
 END//
 DELIMITER ;
 
@@ -430,6 +444,88 @@ BEGIN
 END//
 DELIMITER ;
 
+DROP FUNCTION IF EXISTS isMerchant;
+DELIMITER //
+CREATE FUNCTION isMerchant(selectedEmailId VARCHAR(50))
+RETURNS BOOLEAN
+NOT DETERMINISTIC READS SQL DATA
+BEGIN
+	DECLARE to_return BOOLEAN;
+	SET to_return = 0;
+	IF (SELECT COUNT(email_id) = 1 as joinedTable FROM upi_customer JOIN merchant WHERE upi_customer.account_number = merchant.account_number) THEN
+		SET to_return = 1;
+	END IF;
+	return to_return;
+END //
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS makeUpiTransaction;
+DELIMITER //
+CREATE PROCEDURE makeUpiTransaction(
+	fromEmailId VARCHAR(50),
+	toEmailId VARCHAR(50),
+	amount_to_transfer DOUBLE,
+	transaction_date DATE)
+BEGIN
+	DECLARE account_number_sender VARCHAR(10);
+    DECLARE account_number_receiver VARCHAR(10);
+	DECLARE actual_amount_to_transfer DOUBLE;
+	DECLARE commission_fee DOUBLE;
+	DECLARE sender_bank_transaction_id VARCHAR(10);
+	DECLARE receiver_bank_transaction_id VARCHAR(10);
+	DECLARE upi_transaction_id VARCHAR(10);
+	START TRANSACTION;
+	IF (checkIfEmailIfPresentAsUPICustomer(fromEmailId) = 0) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'From email ID is not registered with UPI';
+	END IF;
+	SELECT account_number INTO account_number_sender FROM upi_customer WHERE email_id = fromEmailId;
+	IF (checkIfEmailIfPresentAsUPICustomer(toEmailId) = 0) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'To email ID is not registered with UPI';
+	END IF;
+	SELECT account_number INTO account_number_receiver FROM upi_customer WHERE email_id = toEmailId;
+	IF (amount_to_transfer < 0) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Transaction amount should be greater than 0';
+	END IF;
+	SET actual_amount_to_transfer = amount_to_transfer;
+	SELECT incrementUPITransactionId() INTO upi_transaction_id;
+	IF (isMerchant(toEmailId)) THEN
+		SET commission_fee = amount_to_transfer * (SELECT fee_percentage FROM merchant WHERE account_number = account_number_receiver);
+		SET actual_amount_to_transfer = amount_to_transfer - commission_fee;
+		CALL bankTransaction(account_number_sender, account_number_receiver, amount_to_transfer, transaction_date, "UPI transaction");
+		UPDATE bank_account SET balance = (balance - commission_fee) WHERE account_number = account_number_receiver;
+		SELECT bank_transaction_id INTO receiver_bank_transaction_id FROM bank_transactions WHERE personal_account_details = account_number_receiver ORDER BY bank_transaction_id DESC LIMIT 1;
+		SELECT bank_transaction_id INTO sender_bank_transaction_id FROM bank_transactions WHERE personal_account_details = account_number_sender ORDER BY bank_transaction_id DESC LIMIT 1;
+		UPDATE bank_transactions SET transaction_value = (transaction_value - commission_fee) WHERE bank_transaction_id = receiver_bank_transaction_id;
+		INSERT INTO upi_transaction (upi_transaction_id, sender_receiver_transaction_id, transaction_date, personal_transaction_id) VALUES
+			(upi_transaction_id, receiver_bank_transaction_id, transaction_date, sender_bank_transaction_id);
+		INSERT INTO commercial_transaction (upi_transaction_id, transaction_fee) VALUES (upi_transaction_id, commission_fee);
+	ELSE
+		CALL bankTransaction(account_number_sender, account_number_receiver, amount_to_transfer, transaction_date, "UPI transaction");
+		SELECT bank_transaction_id INTO receiver_bank_transaction_id FROM bank_transactions WHERE personal_account_details = account_number_receiver ORDER BY bank_transaction_id DESC LIMIT 1;
+		SELECT bank_transaction_id INTO sender_bank_transaction_id FROM bank_transactions WHERE personal_account_details = account_number_sender ORDER BY bank_transaction_id DESC LIMIT 1;
+		INSERT INTO upi_transaction (upi_transaction_id, sender_receiver_transaction_id, transaction_date, personal_transaction_id) VALUES
+			(upi_transaction_id, receiver_bank_transaction_id, transaction_date, sender_bank_transaction_id);
+		INSERT INTO personal_transaction (upi_tranasction_id) VALUES (upi_transaction_id);
+	END IF;
+	COMMIT;
+END //
+DELIMITER ;
+
+DROP FUNCTION IF EXISTS checkIfEmailIfPresentAsUPICustomer;
+DELIMITER //
+CREATE FUNCTION checkIfEmailIfPresentAsUPICustomer(selectedEmailId VARCHAR(50))
+RETURNS BOOLEAN
+NOT DETERMINISTIC READS SQL DATA
+BEGIN
+	DECLARE to_return BOOLEAN;
+	SET to_return = 0;
+	IF (SELECT COUNT(email_id) = 1 FROM upi_customer WHERE email_id = selectedEmailId) THEN
+		SET to_return = 1;
+	END IF;
+	return to_return;
+END//
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS withdrawMoneyfromBank;
 DELIMITER //
 CREATE PROCEDURE withdrawMoneyfromBank(
@@ -479,5 +575,32 @@ BEGIN
 		SET to_return = 1;
 	END IF;
 	return to_return;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS viewAccountDetails;
+DELIMITER //
+CREATE PROCEDURE viewAccountDetails(
+	fetched_ssn VARCHAR(8))
+BEGIN
+	IF (checkLength(fetched_ssn, 8) != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SSN should be 8 digits long';
+	END IF;
+	IF (SELECT COUNT(account_number) FROM bank_account WHERE account_number = account_number != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No accounts associated with this SSN';
+	END IF;
+   	SELECT bank_name, branch.branch_id, account_number, balance, branch.building_number, branch.street_name, branch.city, branch.pin 
+	FROM bank_account 
+    JOIN branch ON  bank_account.branch_id = branch.branch_id
+    JOIN bank ON bank.bank_reg_id = branch.bank_reg_id where ssn = fetched_ssn;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS viewTransaction;
+DELIMITER //
+CREATE PROCEDURE viewTransaction(
+	fetched_accountNumber VARCHAR(10))
+BEGIN
+SELECT * from bank_transactions where personal_account_details = fetched_accountNumber;
 END//
 DELIMITER ;

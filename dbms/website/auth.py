@@ -50,6 +50,9 @@ def logout():
 
 @auth.route('/transaction')
 def transaction():
+    if 'ssn' not in session.keys():
+            flash("Login to a user first", category='error')
+            return redirect('/login')
     if request.method == 'GET':
         return render_template("transaction.html")
 

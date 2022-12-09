@@ -18,8 +18,9 @@ def viewDetails():
         accountNumber = request.form.get('bankAccountNumber')
         if len(accountNumber)!=10:
             flash("Account number should be 10 characters", category='error')
-        cursor.execute("CALL viewTransaction(%s);",(accountNumber,))
-        all_rows = cursor.fetchall()
+        cursor.callproc("viewTransaction", (accountNumber,))
+        for result in cursor.stored_results():
+            all_rows=result.fetchall()
         table = """<table>
                 <tr>
                     <th>Bank Transaction ID</th>
