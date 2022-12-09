@@ -59,4 +59,5 @@ def bankDetails():
                     <td>{i[7]}</td>
                 </tr>\n"""
     table += "</table>"
-    return table
+    # return table
+    return render_template("userBankDetails.html", length=len(all_rows), table_list=all_rows)

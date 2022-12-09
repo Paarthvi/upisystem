@@ -535,6 +535,21 @@ BEGIN
 END//
 DELIMITER ;
 
+DROP FUNCTION IF EXISTS checkIfEmailBelongsToSSN;
+DELIMITER //
+CREATE FUNCTION checkIfEmailBelongsToSSN(selected_ssn VARCHAR(8), selectedEmailId VARCHAR(50))
+RETURNS BOOLEAN
+NOT DETERMINISTIC READS SQL DATA
+BEGIN
+	DECLARE to_return BOOLEAN;
+	SET to_return = 0;
+	IF (SELECT COUNT(email_id) = 1 FROM upi_customer WHERE email_id = selectedEmailId AND ssn = selected_ssn) THEN
+		SET to_return = 1;
+	END IF;
+	return to_return;
+END//
+DELIMITER ;
+
 DROP PROCEDURE IF EXISTS withdrawMoneyfromBank;
 DELIMITER //
 CREATE PROCEDURE withdrawMoneyfromBank(

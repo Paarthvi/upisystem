@@ -1,0 +1,2 @@
+<replace with username of mysql db>
+<replace with password of mysql db>

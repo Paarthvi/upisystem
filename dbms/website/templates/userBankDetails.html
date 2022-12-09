@@ -2,23 +2,25 @@
 {%block title%}View UPI Transactions{%endblock%}
 
 {%block content%}
+<h3 align = "center"> Bank Account Details</h3>
 <table class="table">
     <thead class="thead-dark">  
     <tr>
-        <th scope="col">UPI Transaction ID</th>
-        <th scope="col">Bank Transaction ID</th>
-        <th scope="col">Transaction Type</th>
-        <th scope="col">Personal Account</th>
-        <th scope="col">Sender/Receiver Account</th>
-        <th scope="col">Transaction Date</th>
-        <th scope="col">Transaction Value</th>
+        <th scope="col">Bank Name</th>
+        <th scope="col">Branch ID</th>
+        <th scope="col">Bank Account</th>
+        <th scope="col">Balance</th>
+        <th scope="col">Building Number</th>
+        <th scope="col">Street Name</th>
+        <th scope="col">City</th>
+        <th scope="col">Pin</th>
     </tr>
     </thead>
     <tbody>
     {%for i in range(0, length)%}
     <tr>
         <td>{{table_list[i][0]}}</td>
-        <!-- <td>{{table_list[i][1]}}</td> -->
+        <td>{{table_list[i][1]}}</td>
         <td>{{table_list[i][2]}}</td>
         <td>{{table_list[i][3]}}</td>
         <td>{{table_list[i][4]}}</td>
@@ -29,4 +31,6 @@
     {%endfor%}
 </tbody>
 </table>
+<br />
+<h3 align = "center"> UPI Account Details</h3>
 {%endblock%}

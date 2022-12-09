@@ -2,17 +2,20 @@
 {%block title%}View Transactions{%endblock%}
 
 {%block content%}
-<table>
+<table class="table">
+    <thead class="thead-dark">  
     <tr>
-        <th>Bank Transaction ID</th>
-        <th>Transaction Type</th>
-        <th>Personal Account</th>
-        <th>Sender/Receiver Account</th>
-        <th>Transaction Date</th>
-        <th>Transaction Value</th>
-        <th>Transaction Message</th>
-        <th>Balance</th>
+        <th scope="col">Bank Transaction ID</th>
+        <th scope="col">Transaction Type</th>
+        <th scope="col">Personal Account</th>
+        <th scope="col">Sender/Receiver Account</th>
+        <th scope="col">Transaction Date</th>
+        <th scope="col">Transaction Value</th>
+        <th scope="col">Transaction Message</th>
+        <th scope="col">Balance</th>
     </tr>
+    </thead>
+    <tbody>
 {%for i in range(0, length)%}
     <tr>
         <td>{{table_list[i][0]}}</td>
@@ -25,5 +28,6 @@
         <td>{{table_list[i][7]}}</td>
     </tr>
 {%endfor%}
+</tbody>
 </table>
 {%endblock%}

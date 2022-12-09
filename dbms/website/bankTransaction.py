@@ -21,27 +21,36 @@ def bankTransaction():
             flash(makeBankTransaction(received_data))
         elif ("bankName" in received_data.keys()):
             print("Create bank account")
-            createdBankAccount = createBankAccount(received_data)
-            flash("Successfully created back account: " + createdBankAccount)
+            createBankAccount(received_data)
         return render_template("bankTransaction.html")
 
 def createBankAccount(received_data):
-    todays_date = str(date.today())
-    cursor.execute("SELECT * FROM bank_account WHERE branch_id = %s ORDER BY account_number DESC LIMIT 1;", (received_data['bankBranchId'],))
-    fetchedRows = cursor.fetchall()
-    print(fetchedRows)
-    if (len(fetchedRows) != 0):
-        next_bank_account = str(int(fetchedRows[0][2]) + 1)
-    else:
-        next_bank_account = '0000000001'
-    next_bank_account = (10-len(next_bank_account)) * '0' + next_bank_account
-    cursor.callproc("createBankAccount", (session['ssn'], received_data['bankBranchId'], next_bank_account, received_data["initialDepositAmount"], todays_date))
-    return next_bank_account
+    try:
+        todays_date = str(date.today())
+        cursor.execute("SELECT * FROM bank_account WHERE branch_id = %s ORDER BY account_number DESC LIMIT 1;", (received_data['bankBranchId'],))
+        fetchedRows = cursor.fetchall()
+        if (len(fetchedRows) != 0):
+            next_bank_account = str(int(fetchedRows[0][2]) + 1)
+        else:
+            next_bank_account = '0000000001'
+        next_bank_account = (10-len(next_bank_account)) * '0' + next_bank_account
+        cursor.callproc("createBankAccount", (session['ssn'], received_data['bankBranchId'], next_bank_account, received_data["initialDepositAmount"], todays_date))
+        flash("Successfully created back account: " + next_bank_account)
+    except Exception as e:
+        flash(str(e), category='error')
 
 def makeBankTransaction(received_data):
-    todays_date = str(date.today())
-    cursor.callproc('bankTransaction', (received_data['senderAccountNumber'], received_data['receiverAccountNumber'], received_data['transactionAmount'], todays_date, "Bank to Bank transaction"))
-    return "Successfully transafered $" + received_data['transactionAmount']
+    try:
+        todays_date = str(date.today())
+        cursor.execute("SELECT checkIfAccountBelongsToSSN(%s, %s)", (session['ssn'], received_data['senderAccountNumber']))
+        all_rows = cursor.fetchall()
+        if (not all_rows[0][0]):
+            flash("Bank account is not valid", category='error')
+            return
+        cursor.callproc('bankTransaction', (received_data['senderAccountNumber'], received_data['receiverAccountNumber'], received_data['transactionAmount'], todays_date, "Bank to Bank transaction"))
+        return "Successfully transferred $" + received_data['transactionAmount']
+    except Exception as e:
+        str(e)
 
 
 @banktransaction.route('/bankDetails', methods = ['GET'])
@@ -52,7 +61,7 @@ def bankDetails():
     cursor.execute("SELECT bank_name, branch_id, branch.pin FROM bank JOIN branch ON bank.bank_reg_id = branch.bank_reg_id;")
     all_rows = cursor.fetchall()
     table = """<table>
-                <tr>'bankTransaction'
+                <tr>
                     <th>Bank Name</th>
                     <th>Braanch ID</th>
                     <th>PIN</th>
