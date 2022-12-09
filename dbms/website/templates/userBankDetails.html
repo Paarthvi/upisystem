@@ -32,5 +32,44 @@
 </tbody>
 </table>
 <br />
-<h3 align = "center"> UPI Account Details</h3>
+<h3 align = "center"> UPI Consumer Account Details</h3>
+<table class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">Bank Account</th>
+        <th scope="col">Email</th>
+    </tr>
+    </thead>
+    <tbody>
+    {%for i in range(0, length)%}
+    <tr>
+        <td>{{table_list[i][0]}}</td>
+        <td>{{table_list[i][1]}}</td>
+    </tr>
+    {%endfor%}
+    </tbody>
+</table>
+<br />
+<h3 align = "center"> UPI Merchant Account Details</h3>
+<table class="table">
+    <thead class="thead-dark">
+    <tr>
+        <th scope="col">Bank Account</th>
+        <th scope="col">Email</th>
+        <th scope="col">GST Number</th>
+        <th scope="col">Fee Percentage</th>
+    </tr>
+    </thead>
+    <tbody>
+    {%for i in range(0, length)%}
+    <tr>
+        <td>{{table_list[i][0]}}</td>
+        <td>{{table_list[i][1]}}</td>
+        <td>{{table_list[i][2]}}</td>
+        <td>{{table_list[i][3]}}</td>
+    </tr>
+    {%endfor%}
+    </tbody>
+</table>
+
 {%endblock%}

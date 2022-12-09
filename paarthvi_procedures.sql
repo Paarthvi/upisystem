@@ -144,3 +144,21 @@ where email_id = fetched_emailID ;
 END//
 DELIMITER ;
 
+DROP PROCEDURE IF EXISTS viewUPIConsumer;
+DELIMITER //
+CREATE PROCEDURE viewUPIConsumer(
+fetched_ssn VARCHAR(50))
+BEGIN
+select consumer.account_number, email_id from upi_customer
+JOIN consumer on consumer.account_number = upi_customer.account_number where ssn = fetched_ssn;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS viewUPIMerchant;
+DELIMITER //
+CREATE PROCEDURE viewUPIMerchant(
+fetched_ssn VARCHAR(50))
+SELECT merchant.account_number, email_id, gst_number, fee_percentage FROM merchant 
+JOIN upi_customer ON merchant.account_number = upi_customer.account_number where ssn = fetched_ssn;
+END//
+DELIMITER ;
