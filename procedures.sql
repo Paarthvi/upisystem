@@ -565,3 +565,21 @@ BEGIN
 	COMMIT;
 END//
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS viewUPIConsumerDetailsForSSN;
+DELIMITER //
+CREATE PROCEDURE viewUPIConsumerDetailsForSSN(fetched_ssn VARCHAR(50))
+BEGIN
+	select consumer.account_number, email_id from upi_customer
+		JOIN consumer on consumer.account_number = upi_customer.account_number where upi_customer.ssn = fetched_ssn;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS viewUPIMerchantDetailsForSSN;
+DELIMITER //
+CREATE PROCEDURE viewUPIMerchantDetailsForSSN(fetched_ssn VARCHAR(50))
+BEGIN
+	SELECT merchant.account_number, email_id, gst_number, fee_percentage FROM merchant 
+		JOIN upi_customer ON merchant.account_number = upi_customer.account_number where upi_customer.ssn = fetched_ssn;
+END//
+DELIMITER ;

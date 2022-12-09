@@ -72,6 +72,8 @@ def bankDetails():
     #             </tr>\n"""
     # table += "</table>"
     # return table
+    print(all_rows_consumer)
+    print(all_rows_merchant)
     return render_template("userBankDetails.html", length=len(all_rows), table_list=all_rows,
                            consumer_length = len(all_rows_consumer), consumer_table_list = all_rows_consumer,
                            merchant_length = len(all_rows_merchant), merchant_table_list = all_rows_merchant)

@@ -41,10 +41,10 @@
     </tr>
     </thead>
     <tbody>
-    {%for i in range(0, length)%}
+    {%for i in range(0, consumer_length)%}
     <tr>
-        <td>{{table_list[i][0]}}</td>
-        <td>{{table_list[i][1]}}</td>
+        <td>{{consumer_table_list[i][0]}}</td>
+        <td>{{consumer_table_list[i][1]}}</td>
     </tr>
     {%endfor%}
     </tbody>
@@ -61,12 +61,12 @@
     </tr>
     </thead>
     <tbody>
-    {%for i in range(0, length)%}
+    {%for i in range(0, merchant_length)%}
     <tr>
-        <td>{{table_list[i][0]}}</td>
-        <td>{{table_list[i][1]}}</td>
-        <td>{{table_list[i][2]}}</td>
-        <td>{{table_list[i][3]}}</td>
+        <td>{{merchant_table_list[i][0]}}</td>
+        <td>{{merchant_table_list[i][1]}}</td>
+        <td>{{merchant_table_list[i][2]}}</td>
+        <td>{{merchant_table_list[i][3]}}</td>
     </tr>
     {%endfor%}
     </tbody>

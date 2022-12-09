@@ -17,6 +17,6 @@ def home():
     personal_output = cursor.fetchall()
     cursor.execute("SELECT COUNT(*) from commercial_transaction")
     commercial_output = cursor.fetchall()
-    # return render_template("home.html", bank_transactions = bank_output[0][0]/2, upi_transactions = upi_output[0][0])
-    return render_template("home.html", bank_transactions = 100, upi_transactions = 25,
-                           personal_transaction = 98, commercial_transaction=1000)
+#     return render_template("home.html", bank_transactions = bank_output[0][0]/2, upi_transactions = upi_output[0][0])
+    return render_template("home.html", bank_transactions = bank_output[0][0]/2, upi_transactions = upi_output[0][0],
+                           personal_transaction = personal_output[0][0], commercial_transaction=commercial_output[0][0])
