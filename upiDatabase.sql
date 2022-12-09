@@ -705,3 +705,19 @@ BEGIN
 	where email_id = fetched_emailID ;
 END//
 DELIMITER ;
+
+DROP PROCEDURE IF EXISTS deleteBankAccount;
+DELIMITER //
+CREATE PROCEDURE deleteBankAccount(selectedBankAccount VARCHAR(10))
+BEGIN
+	DECLARE sql_error INT DEFAULT FALSE;
+	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	START TRANSACTION;
+	DELETE FROM bank_account WHERE account_number = selectedBankAccount;
+	IF sql_error = FALSE THEN
+		COMMIT;
+	ELSE
+		ROLLBACK;
+	END IF;
+END//
+DELIMITER ;

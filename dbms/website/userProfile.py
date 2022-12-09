@@ -9,17 +9,29 @@ def viewUserProfile():
     if 'ssn' not in session.keys():
             flash("Login to a user first", category='error')
             return redirect('/login')
-    if request.method == 'GET':
-        return render_template("userProfile.html",
-                               firstName=session['first_name'],
-                               lastName=session['last_name'],
-                               ssn=session['ssn'],
-                               houseNumber=session['house_number'],
-                               streetName=session['street_name'],
-                               city=session['city'],
-                               state=session['state'],
-                               pin=session['pin']
-                               )
+    if request.method == 'POST':
+        received_data = dict(request.form)
+        if 'bankAccountNumber' in received_data.keys():
+            deleteBankAccount(received_data)
+    return render_template("userProfile.html",
+                            firstName=session['first_name'],
+                            lastName=session['last_name'],
+                            ssn=session['ssn'],
+                            houseNumber=session['house_number'],
+                            streetName=session['street_name'],
+                            city=session['city'],
+                            state=session['state'],
+                            pin=session['pin'])
+
+def deleteBankAccount(received_data):
+    cursor.execute("SELECT checkIfAccountBelongsToSSN(%s, %s)", (session['ssn'], received_data['bankAccountNumber']))
+    all_rows = cursor.fetchall()
+    if (not all_rows[0][0]):
+        flash("Bank account is not valid", category='error')
+        return
+    cursor.callproc('deleteBankAccount', (received_data['bankAccountNumber'],))
+    flash("Deleted account " + received_data['bankAccountNumber'] + " successfully")
+
 
 @userprofile.route('/accountDetails', methods = ['GET'])
 def bankDetails():
