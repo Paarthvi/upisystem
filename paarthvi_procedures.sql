@@ -102,5 +102,25 @@ BEGIN
 END//
 DELIMITER ;
     
+DROP PROCEDURE IF EXISTS viewAccountDetails;
+DELIMITER //
+CREATE PROCEDURE viewAccountDetails(
+	fetched_ssn VARCHAR(8))
+BEGIN
+	IF (checkLength(fetched_ssn, 8) != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SSN should be 8 digits long';
+	END IF;
+	IF (SELECT COUNT(account_number) FROM bank_account WHERE account_number = account_number != 1) THEN
+		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No accounts associated with this SSN';
+	END IF;
+   	SELECT bank_name, branch.branch_id, account_number, balance, branch.building_number, branch.street_name, branch.city, branch.pin 
+	FROM bank_account 
+    JOIN branch ON  bank_account.branch_id = branch.branch_id
+    JOIN bank ON bank.bank_reg_id = branch.bank_reg_id where ssn = fetched_ssn;
+END//
+DELIMITER ;
+CALL viewAccountDetails("12345679");
+
+
    
 
