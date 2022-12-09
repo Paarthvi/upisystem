@@ -121,6 +121,15 @@ END//
 DELIMITER ;
 CALL viewAccountDetails("12345679");
 
+DROP PROCEDURE IF EXISTS viewTransaction;
+DELIMITER //
+CREATE PROCEDURE viewTransaction(
+	fetched_accountNumber VARCHAR(10))
+BEGIN
+SELECT * from bank_transactions where personal_account_details = fetched_accountNumber;
+END//
+DELIMITER ;
+CALL viewTransaction("0000000007");
 
    
 
