@@ -131,5 +131,16 @@ END//
 DELIMITER ;
 CALL viewTransaction("0000000007");
 
-   
+DROP PROCEDURE IF EXISTS viewUPITransaction;
+DELIMITER //
+CREATE PROCEDURE viewUPITransaction(
+fetched_emailID VARCHAR(50))
+BEGIN
+SELECT upi_transaction_id, balance, bank_transactions.* from upi_customer
+JOIN bank_account ON upi_customer.account_number = bank_account.account_number
+JOIN bank_transactions ON bank_account.account_number = bank_transactions.personal_account_details
+JOIN upi_transaction ON bank_transactions.bank_transaction_id  =  upi_transaction.personal_transaction_id 
+where email_id = fetched_emailID ;
+END//
+DELIMITER ;
 
