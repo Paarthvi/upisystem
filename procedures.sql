@@ -15,7 +15,11 @@ CREATE PROCEDURE addIndividual(
     login_password VARCHAR(255))
 BEGIN
 	DECLARE sql_error INT DEFAULT FALSE;
-	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not register individual';
+		END;
 	START TRANSACTION;
 	IF (checkLength(ssn, 8) != 1) THEN 
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SSN should be 8 characters';
@@ -27,12 +31,8 @@ BEGIN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'The phone number should be 10 digits only';
 	END IF;
 	INSERT INTO individual (ssn, first_name, last_name, house_number, street_name, city, state, pin, phone_number, login_password)
-    VALUES (ssn, first_name, last_name, house_number, street_name, city, state, pin, phone_number, MD5(login_password));
-    IF sql_error = FALSE THEN
-		COMMIT;
-	ELSE
-		ROLLBACK;
-	END IF;
+    	VALUES (ssn, first_name, last_name, house_number, street_name, city, state, pin, phone_number, MD5(login_password));
+	COMMIT;
 END//
 DELIMITER ;
 
@@ -72,18 +72,18 @@ CREATE PROCEDURE createBranch(
     pin VARCHAR(6))
 BEGIN
 	DECLARE sql_error INT DEFAULT FALSE;
-	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not register new branch';
+		END;
 	START TRANSACTION;
 	IF (checkLength(branch_id, 5) != 1) THEN 
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Branch ID should be 5 characters';
 	END IF;
 	INSERT INTO branch (ssn, first_name, last_name, house_number, street_name, city, state, pin, phone_number)
     VALUES (ssn, first_name, last_name, house_number, street_name, city, state, pin, phone_number);
-   IF sql_error = FALSE THEN
-		COMMIT;
-	ELSE
-		ROLLBACK;
-	END IF;
+	COMMIT;
 END//
 DELIMITER ;
 
@@ -95,20 +95,20 @@ CREATE PROCEDURE registerForUPIConsumer(
 	email_id VARCHAR(50))
 BEGIN
 	DECLARE sql_error INT DEFAULT FALSE;
-	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not register consumer to UPI';
+		END;
 	START TRANSACTION;
 	IF (checkLength(ssn, 8) != 1) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SSN should be 8 characters';
 	END IF;
 	INSERT INTO upi_customer (ssn, account_number, email_id)
-	VALUES (ssn, account_number, email_id);
+		VALUES (ssn, account_number, email_id);
 	INSERT INTO consumer (ssn, account_number)
-	VALUES (ssn, account_number);
-	IF sql_error = FALSE THEN
-		COMMIT;
-	ELSE
-		ROLLBACK;
-	END IF;
+		VALUES (ssn, account_number);
+	COMMIT;
 END//
 DELIMITER ;
 
@@ -128,7 +128,11 @@ CREATE PROCEDURE registerForUPIMerchant(
     addressPin VARCHAR(6))
 BEGIN
 	DECLARE sql_error INT DEFAULT FALSE;
-	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not register merchant to UPI';
+		END;
 	START TRANSACTION;
 	IF (checkLength(ssn, 8) != 1) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SSN should be 8 characters';
@@ -138,14 +142,10 @@ BEGIN
 	END IF;
 
 	INSERT INTO upi_customer (ssn, account_number, email_id)
-	VALUES (ssn, account_number, email_id);
+		VALUES (ssn, account_number, email_id);
 	INSERT INTO merchant (gst_number, fee_percentage, building_name, street_name, city, state, pin, ssn, account_number)
-	VALUES (gst_number, fee_percentage, building_name, street_name, city, state, addressPin, ssn, account_number);
-	IF sql_error = FALSE THEN
-		COMMIT;
-	ELSE
-		ROLLBACK;
-	END IF;
+		VALUES (gst_number, fee_percentage, building_name, street_name, city, state, addressPin, ssn, account_number);
+	COMMIT;
 END//
 DELIMITER ;
 	
@@ -161,7 +161,11 @@ BEGIN
 	DECLARE newBalance DOUBLE DEFAULT currentBalance;
 	DECLARE fetched_branch_id VARCHAR(5);
 	DECLARE sql_error INT DEFAULT FALSE;
-	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not deposite money into bank account';
+		END;
 	START TRANSACTION;
 	IF (checkLength(selected_account_number, 10) != 1) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number should be 10 digits long';
@@ -178,11 +182,7 @@ BEGIN
 	SELECT branch_id INTO fetched_branch_id FROM bank_account WHERE account_number = selected_account_number;
 	INSERT INTO bank_transactions (SELECT incrementNextTransactionId(fetched_branch_id), "CREDIT", 
 		selected_account_number, "InPerDepos", date_of_transaction, amount, "In person deposit", newBalance);
-	IF sql_error = FALSE THEN
-		COMMIT;
-	ELSE
-		ROLLBACK;
-	END IF;
+	COMMIT;
 END//
 DELIMITER ;
 
@@ -245,15 +245,15 @@ CREATE PROCEDURE createBank(
     pin VARCHAR(6))
 BEGIN
 	DECLARE sql_error INT DEFAULT FALSE;
-	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not register new bank';
+		END;
 	START TRANSACTION;
 	INSERT INTO bank (bank_name, bank_reg_id, routing_number, building_number, street_name, city, state, pin)
-    VALUES (bank_name, bank_reg_id, routing_number, building_number, street_name, city, state, pin);
-    IF sql_error = FALSE THEN
-		COMMIT;
-	ELSE
-		ROLLBACK;
-	END IF;
+    	VALUES (bank_name, bank_reg_id, routing_number, building_number, street_name, city, state, pin);
+	COMMIT;
 END//
 DELIMITER ;
 
@@ -268,7 +268,11 @@ balance DOUBLE,
 date_of_creation DATE)
 BEGIN
 	DECLARE sql_error INT DEFAULT FALSE;
-	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not register new bank account';
+		END;
 	START TRANSACTION;
     IF (checkLength(ssn, 8) != 1) THEN 
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'SSN has to have 8 Character';
@@ -284,11 +288,7 @@ BEGIN
 	END IF;
     INSERT INTO bank_account (ssn, branch_id, account_number, balance) VALUES (ssn, branch_id, account_number, 0);
    	CALL depositeMoneyInBank(account_number, balance, date_of_creation);
-    IF sql_error = FALSE THEN
-		COMMIT;
-	ELSE
-		ROLLBACK;
-	END IF;
+	COMMIT;
 END//
 DELIMITER ;
 
@@ -306,7 +306,11 @@ BEGIN
 	DECLARE sender_old_balance DOUBLE;
 	DECLARE receiver_old_balance DOUBLE;
 	DECLARE sql_error INT DEFAULT FALSE;
-	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not complete bank to bank transaction';
+		END;
 	START TRANSACTION;
 	IF (checkLength(account_number_sender, 10) != 1) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sender Account number should be 10 characters';
@@ -333,11 +337,7 @@ BEGIN
 		account_number_sender, account_number_receiver, date_of_transaction, amount_to_transfer, message, sender_old_balance - amount_to_transfer);
 	INSERT INTO bank_transactions (SELECT incrementNextTransactionId(desination_branch_id), "CREDIT", 
 		account_number_receiver, account_number_sender, date_of_transaction, amount_to_transfer, message, receiver_old_balance + amount_to_transfer);
-    IF sql_error = FALSE THEN
-		COMMIT;
-	ELSE
-		ROLLBACK;
-	END IF;
+	COMMIT;
 END//
 DELIMITER ;
 
@@ -373,7 +373,11 @@ BEGIN
 	DECLARE upi_transaction_id VARCHAR(10);
 	DECLARE updated_balance_receiver DOUBLE;
 	DECLARE sql_error INT DEFAULT FALSE;
-	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not complete UPI transaction';
+		END;
 	START TRANSACTION;
 	IF (checkIfEmailIfPresentAsUPICustomer(fromEmailId) = 0) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'From email ID is not registered with UPI';
@@ -410,11 +414,7 @@ BEGIN
 			(upi_transaction_id, receiver_bank_transaction_id, transaction_date, sender_bank_transaction_id);
 		INSERT INTO personal_transaction (upi_transaction_id) VALUES (upi_transaction_id);
 	END IF;
-	IF sql_error = FALSE THEN
-		COMMIT;
-	ELSE
-		ROLLBACK;
-	END IF;
+	COMMIT;
 END //
 DELIMITER ;
 
@@ -458,7 +458,11 @@ BEGIN
 	DECLARE fetched_branch_id VARCHAR(5);
 	DECLARE new_balance DOUBLE;
 	DECLARE sql_error INT DEFAULT FALSE;
-	DECLARE CONTINUE HANDLER FOR SQLEXCEPTION SET sql_error = TRUE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not withdraw money from bank account';
+		END;
 	START TRANSACTION;
 	IF (checkLength(selected_account_number, 10) != 1) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number should be 10 digits long';
@@ -478,11 +482,7 @@ BEGIN
    	SELECT branch_id INTO fetched_branch_id FROM bank_account WHERE account_number = selected_account_number;
 	INSERT INTO bank_transactions (SELECT incrementNextTransactionId(fetched_branch_id), "DEBIT", 
 		selected_account_number, "InPerWithd", date_of_transaction, amount, "In person withdrawal", new_balance);
-	IF sql_error = FALSE THEN
-		COMMIT;
-	ELSE
-		ROLLBACK;
-	END IF;
+	COMMIT;
 END//
 DELIMITER ;
     
@@ -547,5 +547,21 @@ BEGIN
 	JOIN upi_transaction ON bank_transactions.bank_transaction_id  =  upi_transaction.personal_transaction_id 
 	OR bank_transactions.bank_transaction_id  =  upi_transaction.sender_receiver_transaction_id
 	where email_id = fetched_emailID ;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS deleteBankAccount;
+DELIMITER //
+CREATE PROCEDURE deleteBankAccount(selectedBankAccount VARCHAR(10))
+BEGIN
+	DECLARE sql_error INT DEFAULT FALSE;
+	DECLARE EXIT HANDLER FOR SQLEXCEPTION 
+		BEGIN
+			ROLLBACK;
+			SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Could not remove bank account from records';
+		END;
+	START TRANSACTION;
+	DELETE FROM bank_account WHERE account_number = selectedBankAccount;
+	COMMIT;
 END//
 DELIMITER ;
