@@ -1,1 +1,3 @@
 dbms/config.txt
+dbms/website/__pycache__/*
+dbms/__pycache__
