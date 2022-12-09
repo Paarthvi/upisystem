@@ -56,21 +56,6 @@ def transaction():
     if request.method == 'GET':
         return render_template("transaction.html")
 
-# @auth.route('/viewTransaction', methods =['GET','POST'])
-# def viewTransaction():
-#     # if request.method == 'GET':
-#     #     return render_template("viewTransaction.html")
-#     if request.method == 'POST':
-#         accountNumber = request.form.get('bankAccountNumber')
-#         if len(accountNumber)!=10:
-#             flash("Account number should be 10 characters", category='error')
-#         cursor.execute("SELECT * from bank_transactions where personal_account_details = %s",(accountNumber,))
-#         all_rows = cursor.fetchall()
-#         for i in all_rows:
-#             print(i)
-#         print(request.form)
-#     return render_template("viewTransaction.html")
-
 @auth.route('/sign-up', methods =['GET','POST'])
 def sign_up():
     if request.method == 'POST':

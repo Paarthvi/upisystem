@@ -16,7 +16,3 @@ def create_app():
     app.register_blueprint(userprofile, url_prefix= "/")
     app.register_blueprint(viewtransactions, url_prefix= "/")
     return app
-
-# if __name__ == 'main':
-#     app = create_app()
-#     app.run(debug=True)

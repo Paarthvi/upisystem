@@ -1,5 +1,4 @@
 from flask import Blueprint, render_template, session, flash, redirect
-# from .main import cursor
 
 
 views = Blueprint("views", __name__)
