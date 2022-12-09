@@ -5,18 +5,18 @@
 <table>
     <tr>
         <th>UPI Transaction ID</th>
+        <!-- <th>Balance</th> -->
         <th>Bank Transaction ID</th>
         <th>Transaction Type</th>
         <th>Personal Account</th>
         <th>Sender/Receiver Account</th>
         <th>Transaction Date</th>
         <th>Transaction Value</th>
-        <th>Transaction Message</th>
     </tr>
     {%for i in range(0, length)%}
     <tr>
         <td>{{table_list[i][0]}}</td>
-        <td>{{table_list[i][1]}}</td>
+        <!-- <td>{{table_list[i][1]}}</td> -->
         <td>{{table_list[i][2]}}</td>
         <td>{{table_list[i][3]}}</td>
         <td>{{table_list[i][4]}}</td>

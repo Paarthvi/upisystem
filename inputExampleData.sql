@@ -41,3 +41,11 @@ CALL createBankAccount('12345601', '00004', '0000000004', 3000, '2022-09-03');
 
 CALL createBankAccount('12345602', '00005', '0000000005', 7000, '2022-09-02');
 CALL createBankAccount('12345602', '00002', '0000000006', 1111, '2022-09-02');
+
+
+CALL registerForUPIConsumer('12345678', '0000000001', 'prajwalkpshenoy@gmail.com');
+CALL registerForUPIMerchant('12345678', '0000000002', 'prajwalshenoy@gmail.com', '1234567890',
+							2, '44', '1209 Boylston St', 'Boston', 'MA', '02215');
+
+
+CALL registerForUPIConsumer('12345679', '0000000007', 'paarthvi.sharma1998@gmail.com');

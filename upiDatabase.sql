@@ -66,6 +66,7 @@ CREATE TABLE bank_transactions (
     transaction_date DATE,
     transaction_value DOUBLE,
     transaction_message VARCHAR(100),
+	new_balance DOUBLE,
     CONSTRAINT bank_transactions_account_number
 		FOREIGN KEY (personal_account_details) REFERENCES bank_account (account_number)
         ON UPDATE CASCADE ON DELETE CASCADE
@@ -274,7 +275,7 @@ BEGIN
 
 	INSERT INTO upi_customer (ssn, account_number, email_id)
 	VALUES (ssn, account_number, email_id);
-	INSERT INTO merchant (gst_number, fee_percentage, building_name, street_name, city, state, addressPin, ssn, account_number)
+	INSERT INTO merchant (gst_number, fee_percentage, building_name, street_name, city, state, pin, ssn, account_number)
 	VALUES (gst_number, fee_percentage, building_name, street_name, city, state, addressPin, ssn, account_number);
 	COMMIT;
 END//
@@ -306,7 +307,7 @@ BEGIN
 	UPDATE bank_account SET balance = newBalance WHERE account_number = selected_account_number;
 	SELECT branch_id INTO fetched_branch_id FROM bank_account WHERE account_number = selected_account_number;
 	INSERT INTO bank_transactions (SELECT incrementNextTransactionId(fetched_branch_id), "CREDIT", 
-		selected_account_number, "InPerDepos", date_of_transaction, amount, "In person deposit");
+		selected_account_number, "InPerDepos", date_of_transaction, amount, "In person deposit", newBalance);
 	COMMIT;
 END//
 DELIMITER ;
@@ -416,6 +417,8 @@ CREATE PROCEDURE bankTransaction(
 BEGIN
 	DECLARE source_branch_id VARCHAR(5);
 	DECLARE desination_branch_id VARCHAR(5);
+	DECLARE sender_old_balance DOUBLE;
+	DECLARE receiver_old_balance DOUBLE;
 	START TRANSACTION;
 	IF (checkLength(account_number_sender, 10) != 1) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Sender Account number should be 10 characters';
@@ -434,12 +437,14 @@ BEGIN
 	END IF;
 	SELECT branch_id INTO source_branch_id FROM bank_account WHERE account_number = account_number_sender;
 	SELECT branch_id INTO desination_branch_id FROM bank_account WHERE account_number = account_number_receiver;
-    UPDATE bank_account SET balance = (balance + amount_to_transfer) WHERE account_number = account_number_receiver;
-    UPDATE bank_account SET balance = (balance - amount_to_transfer) WHERE account_number = account_number_sender;
+	SELECT balance INTO sender_old_balance FROM bank_account WHERE account_number = account_number_sender;
+	SELECT balance INTO receiver_old_balance FROM bank_account WHERE account_number = account_number_receiver;
+    UPDATE bank_account SET balance = (receiver_old_balance + amount_to_transfer) WHERE account_number = account_number_receiver;
+    UPDATE bank_account SET balance = (sender_old_balance - amount_to_transfer) WHERE account_number = account_number_sender;
     INSERT INTO bank_transactions (SELECT incrementNextTransactionId(source_branch_id), "DEBIT", 
-		account_number_sender, account_number_receiver, date_of_transaction, amount_to_transfer, message);
+		account_number_sender, account_number_receiver, date_of_transaction, amount_to_transfer, message, sender_old_balance - amount_to_transfer);
 	INSERT INTO bank_transactions (SELECT incrementNextTransactionId(desination_branch_id), "CREDIT", 
-		account_number_receiver, account_number_sender, date_of_transaction, amount_to_transfer, message);
+		account_number_receiver, account_number_sender, date_of_transaction, amount_to_transfer, message, receiver_old_balance + amount_to_transfer);
     COMMIT;
 END//
 DELIMITER ;
@@ -474,6 +479,7 @@ BEGIN
 	DECLARE sender_bank_transaction_id VARCHAR(10);
 	DECLARE receiver_bank_transaction_id VARCHAR(10);
 	DECLARE upi_transaction_id VARCHAR(10);
+	DECLARE updated_balance_receiver DOUBLE;
 	START TRANSACTION;
 	IF (checkIfEmailIfPresentAsUPICustomer(fromEmailId) = 0) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'From email ID is not registered with UPI';
@@ -489,13 +495,16 @@ BEGIN
 	SET actual_amount_to_transfer = amount_to_transfer;
 	SELECT incrementUPITransactionId() INTO upi_transaction_id;
 	IF (isMerchant(toEmailId)) THEN
-		SET commission_fee = amount_to_transfer * (SELECT fee_percentage FROM merchant WHERE account_number = account_number_receiver);
+		SET commission_fee = (amount_to_transfer * (SELECT fee_percentage FROM merchant WHERE account_number = account_number_receiver)) / 100;
 		SET actual_amount_to_transfer = amount_to_transfer - commission_fee;
 		CALL bankTransaction(account_number_sender, account_number_receiver, amount_to_transfer, transaction_date, "UPI transaction");
-		UPDATE bank_account SET balance = (balance - commission_fee) WHERE account_number = account_number_receiver;
+		SELECT balance INTO updated_balance_receiver FROM bank_account WHERE account_number = account_number_receiver;
+		SET updated_balance_receiver = updated_balance_receiver - commission_fee;
+		UPDATE bank_account SET balance = updated_balance_receiver WHERE account_number = account_number_receiver;
 		SELECT bank_transaction_id INTO receiver_bank_transaction_id FROM bank_transactions WHERE personal_account_details = account_number_receiver ORDER BY bank_transaction_id DESC LIMIT 1;
 		SELECT bank_transaction_id INTO sender_bank_transaction_id FROM bank_transactions WHERE personal_account_details = account_number_sender ORDER BY bank_transaction_id DESC LIMIT 1;
-		UPDATE bank_transactions SET transaction_value = (transaction_value - commission_fee) WHERE bank_transaction_id = receiver_bank_transaction_id;
+		UPDATE bank_transactions SET transaction_value = actual_amount_to_transfer WHERE bank_transaction_id = receiver_bank_transaction_id;
+		UPDATE bank_transactions SET new_balance = updated_balance_receiver WHERE bank_transaction_id = receiver_bank_transaction_id;
 		INSERT INTO upi_transaction (upi_transaction_id, sender_receiver_transaction_id, transaction_date, personal_transaction_id) VALUES
 			(upi_transaction_id, receiver_bank_transaction_id, transaction_date, sender_bank_transaction_id);
 		INSERT INTO commercial_transaction (upi_transaction_id, transaction_fee) VALUES (upi_transaction_id, commission_fee);
@@ -505,7 +514,7 @@ BEGIN
 		SELECT bank_transaction_id INTO sender_bank_transaction_id FROM bank_transactions WHERE personal_account_details = account_number_sender ORDER BY bank_transaction_id DESC LIMIT 1;
 		INSERT INTO upi_transaction (upi_transaction_id, sender_receiver_transaction_id, transaction_date, personal_transaction_id) VALUES
 			(upi_transaction_id, receiver_bank_transaction_id, transaction_date, sender_bank_transaction_id);
-		INSERT INTO personal_transaction (upi_tranasction_id) VALUES (upi_transaction_id);
+		INSERT INTO personal_transaction (upi_transaction_id) VALUES (upi_transaction_id);
 	END IF;
 	COMMIT;
 END //
@@ -534,6 +543,7 @@ CREATE PROCEDURE withdrawMoneyfromBank(
        date_of_transaction DATE)
 BEGIN
 	DECLARE fetched_branch_id VARCHAR(5);
+	DECLARE new_balance DOUBLE;
 	START TRANSACTION;
 	IF (checkLength(selected_account_number, 10) != 1) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Account number should be 10 digits long';
@@ -547,10 +557,12 @@ BEGIN
 	IF (SELECT balance < amount FROM bank_account WHERE account_number = selected_account_number) THEN
 		SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Insufficient balance';
 	END IF;
-    UPDATE bank_account SET balance = (balance - amount) WHERE account_number = selected_account_number;
+	SELECT balance INTO new_balance FROM bank_account WHERE account_number = selected_account_number;
+	SET new_balance = new_balance - amount;
+    UPDATE bank_account SET balance = new_balance WHERE account_number = selected_account_number;
    	SELECT branch_id INTO fetched_branch_id FROM bank_account WHERE account_number = selected_account_number;
 	INSERT INTO bank_transactions (SELECT incrementNextTransactionId(fetched_branch_id), "DEBIT", 
-		selected_account_number, "InPerWithd", date_of_transaction, amount, "In person withdrawal");
+		selected_account_number, "InPerWithd", date_of_transaction, amount, "In person withdrawal", new_balance);
 	COMMIT;
 END//
 DELIMITER ;
@@ -602,5 +614,19 @@ CREATE PROCEDURE viewTransaction(
 	fetched_accountNumber VARCHAR(10))
 BEGIN
 SELECT * from bank_transactions where personal_account_details = fetched_accountNumber;
+END//
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS viewUPITransaction;
+DELIMITER //
+CREATE PROCEDURE viewUPITransaction(
+fetched_emailID VARCHAR(50))
+BEGIN
+SELECT upi_transaction_id, balance, bank_transactions.* from upi_customer
+JOIN bank_account ON upi_customer.account_number = bank_account.account_number
+JOIN bank_transactions ON bank_account.account_number = bank_transactions.personal_account_details
+JOIN upi_transaction ON bank_transactions.bank_transaction_id  =  upi_transaction.personal_transaction_id 
+OR bank_transactions.bank_transaction_id  =  upi_transaction.sender_receiver_transaction_id
+where email_id = fetched_emailID ;
 END//
 DELIMITER ;

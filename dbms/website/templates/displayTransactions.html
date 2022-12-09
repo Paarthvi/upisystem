@@ -11,6 +11,7 @@
         <th>Transaction Date</th>
         <th>Transaction Value</th>
         <th>Transaction Message</th>
+        <th>Balance</th>
     </tr>
 {%for i in range(0, length)%}
     <tr>
@@ -21,6 +22,7 @@
         <td>{{table_list[i][4]}}</td>
         <td>{{table_list[i][5]}}</td>
         <td>{{table_list[i][6]}}</td>
+        <td>{{table_list[i][7]}}</td>
     </tr>
 {%endfor%}
 </table>

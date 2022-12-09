@@ -10,7 +10,7 @@ def login():
     if request.method == 'POST':
         phoneNumber = request.form.get('phoneNumber')
         password = request.form.get('password1')
-        cursor.execute("SELECT verifyPassword(%s, %s)", (phoneNumber, password))
+        cursor.execute("SELECT verifyPassword(%s, %s);", (phoneNumber, password))
         all_rows = cursor.fetchall()
         if (all_rows[0][0] == 1):
             cursor.execute("SELECT * FROM individual WHERE phone_number = %s;", (phoneNumber,))
