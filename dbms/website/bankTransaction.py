@@ -63,7 +63,7 @@ def bankDetails():
     table = """<table>
                 <tr>
                     <th>Bank Name</th>
-                    <th>Braanch ID</th>
+                    <th>Branch ID</th>
                     <th>PIN</th>
                 </tr>\n"""
     for i in all_rows:
