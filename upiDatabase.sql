@@ -79,7 +79,7 @@ CREATE TABLE upi_transaction (
     personal_transaction_id VARCHAR(10),
     CONSTRAINT personal_transaction_id_bank_transaction_id
 		FOREIGN KEY (personal_transaction_id) REFERENCES bank_transactions (bank_transaction_id)
-        ON UPDATE CASCADE,
+        ON UPDATE CASCADE ON DELETE CASCADE,
 	CONSTRAINT sender_receiver_transaction_id_bank_transaction_id
 		FOREIGN KEY (sender_receiver_transaction_id) REFERENCES bank_transactions (bank_transaction_id)
         ON UPDATE CASCADE ON DELETE CASCADE
@@ -505,7 +505,7 @@ NOT DETERMINISTIC READS SQL DATA
 BEGIN
 	DECLARE to_return BOOLEAN;
 	SET to_return = 0;
-	IF (SELECT COUNT(email_id) = 1 as joinedTable FROM upi_customer JOIN merchant WHERE upi_customer.account_number = merchant.account_number) THEN
+	IF (SELECT COUNT(email_id) = 1 FROM merchant JOIN upi_customer ON upi_customer.account_number = merchant.account_number WHERE email_id = selectedEmailId) THEN
 		SET to_return = 1;
 	END IF;
 	return to_return;

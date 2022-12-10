@@ -27,7 +27,7 @@ def bankTransaction():
 def createBankAccount(received_data):
     try:
         todays_date = str(date.today())
-        cursor.execute("SELECT * FROM bank_account WHERE branch_id = %s ORDER BY account_number DESC LIMIT 1;", (received_data['bankBranchId'],))
+        cursor.execute("SELECT * FROM bank_account ORDER BY account_number DESC LIMIT 1;")
         fetchedRows = cursor.fetchall()
         if (len(fetchedRows) != 0):
             next_bank_account = str(int(fetchedRows[0][2]) + 1)
